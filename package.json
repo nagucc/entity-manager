@@ -1,17 +1,22 @@
 {
-  "private": true,
-  "name": "babel-starter-kit",
-  "version": "0.0.0",
-  "description": "A project template for authoring and publishing JavaScript libraries",
-  "homepage": "https://www.kriasoft.com/babel-starter-kit/",
-  "repository": "kriasoft/babel-starter-kit",
-  "author": "Kriasoft <hello@kriasoft.com> (https://www.kriasoft.com)",
-  "contributors": [
-    "Konstantin Tarkus <hello@tarkus.me>"
-  ],
-  "license": "MIT",
-  "keywords": [],
-  "main": "index.js",
+  "name": "entity-manager",
+  "version": "0.0.1",
+  "description": "Entity Manager for mongodb",
+  "main": "dist/index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nagucc/entity-manager.git"
+  },
+  "author": "",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nagucc/entity-manager/issues"
+  },
+  "homepage": "https://github.com/nagucc/entity-manager#readme",
   "jsnext:main": "index.es6.js",
   "babel": {
     "presets": [
@@ -30,7 +35,8 @@
     }
   },
   "dependencies": {
-    "babel-runtime": "^6.6.1"
+    "babel-runtime": "^6.6.1",
+    "mongo-use-collection": "^0.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.8.0",
