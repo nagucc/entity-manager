@@ -1,6 +1,10 @@
+import EntityManagerMongoDB from './entity-manager-mongodb';
 
-/*
-eslint-disable no-console
- */
 
-console.log('hello');
+const EntityManager = EntityManagerMongoDB;
+
+export {
+  EntityManagerMongoDB,
+};
+
+export default EntityManager;
