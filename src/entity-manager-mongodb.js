@@ -122,6 +122,18 @@ export default class EntityManager {
     }));
   }
 
+  aggregate(pipeline, options) {
+    return new Promise((resolve, reject) => this.useEntity(async col => {
+      try {
+        const cursor = col.aggregate(pipeline, options);
+        const result = await cursor.toArray();
+        resolve(result);
+      } catch (e) {
+        reject(e);
+      }
+    }));
+  }
+
   mapReduce(map, reduce, options) {
     return new Promise((resolve, reject) => this.useEntity(async col => {
       try {
