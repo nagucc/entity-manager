@@ -134,6 +134,19 @@ export default class EntityManager {
     }));
   }
 
+  group(keys, condition, initial, reduce, finalize, command, options) {
+    return new Promise((resolve, reject) => this.useEntity(async col => {
+      try {
+        const result = await col.group(
+          keys, condition, initial, reduce, finalize, command, options
+        );
+        resolve(result);
+      } catch (e) {
+        reject(e);
+      }
+    }));
+  }
+
   mapReduce(map, reduce, options) {
     return new Promise((resolve, reject) => this.useEntity(async col => {
       try {
