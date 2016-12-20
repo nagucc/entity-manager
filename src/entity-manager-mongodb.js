@@ -5,6 +5,7 @@ EntityManager 类，用于生成一个通用的管理Entity的类。
 eslint-disable no-console
  */
 import { useCollection } from 'mongo-use-collection'; // eslint-disable-line import/no-unresolved
+import { MongoClient, GridStore } from 'mongodb';
 
 export default class EntityManager {
   /**
@@ -134,12 +135,13 @@ export default class EntityManager {
     }));
   }
 
+
   group(keys, condition, initial, reduce, finalize, command, options) {
     return new Promise((resolve, reject) => this.useEntity(async col => {
       try {
-        const result = await col.group(
-          keys, condition, initial, reduce, finalize, command, options
-        );
+        // http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#group
+        const result = await col.group(keys, condition, initial,
+          reduce, finalize, command, options);
         resolve(result);
       } catch (e) {
         reject(e);
@@ -156,5 +158,57 @@ export default class EntityManager {
         reject(e);
       }
     }));
+  }
+
+  async writeFile(data, fileId, filename, options = null) {
+    try {
+      // 连接数据库
+      const db = await MongoClient.connect(this.mongoUrl);
+
+      // 创建一个新文件用于写入
+      // http://mongodb.github.io/node-mongodb-native/2.2/api/GridStore.html
+      const gs = new GridStore(db, fileId, filename, 'w', options);
+
+      // 打开文件
+      await gs.open();
+
+      // 写入Buffer
+      await gs.write(data);
+
+      // 关闭文件
+      await gs.close();
+
+      await db.close();
+
+      // 返回文件Id
+      return fileId;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async readFile(fileId) {
+    try {
+    // 连接数据库
+      const db = await MongoClient.connect(this.mongoUrl);
+      const file = await GridStore.read(db, fileId);
+      await db.close();
+
+      // 返回文件Buffer
+      return file;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async removeFile(fileId) {
+    try {
+    // 连接数据库
+      const db = await MongoClient.connect(this.mongoUrl);
+      await GridStore.unlink(db, fileId);
+      await db.close();
+    } catch (e) {
+      throw e;
+    }
   }
 }
