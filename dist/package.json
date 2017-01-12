@@ -1,6 +1,6 @@
 {
   "name": "entity-manager",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "description": "Entity Manager for mongodb",
   "main": "dist/index.js",
   "directories": {
@@ -20,7 +20,8 @@
   "jsnext:main": "index.es6.js",
   "dependencies": {
     "babel-runtime": "^6.6.1",
-    "mongo-use-collection": "^0.1.1",
+    "debug": "^2.6.0",
+    "mongo-use-collection": "^0.2.1",
     "mongodb": "^2.2.16"
   }
 }
