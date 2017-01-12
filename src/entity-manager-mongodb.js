@@ -58,6 +58,7 @@ export default class EntityManager {
         const cursor = col.find(query).skip(skip).limit(limit);
         info('cursor:', cursor);
         result = await cursor.toArray();
+        console.log('###', result);
         info(`[${col.collectionName}]result count::${result.length}`);
         return resolve(result);
       } catch (e) {
