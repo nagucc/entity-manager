@@ -6,7 +6,10 @@ eslint-disable no-console
  */
 import { useCollection } from 'mongo-use-collection'; // eslint-disable-line import/no-unresolved
 import { MongoClient, GridStore } from 'mongodb';
+import debug from 'debug';
 
+const info = debug('entity-manager:info');
+const error = debug('entity-manager:error');
 export default class EntityManager {
   /**
    * 构造函数
@@ -49,13 +52,13 @@ export default class EntityManager {
     return new Promise((resolve, reject) => this.useEntity(async col => {
       let result;
       try {
-        console.log(`[EntityManager find][${col.collectionName}]query::`, JSON.stringify(query));
+        info(`[${col.collectionName}]query::${JSON.stringify(query)}`);
         const cursor = col.find(query).skip(skip).limit(limit);
         result = await cursor.toArray();
-        console.log('[EntityManager find]', col.collectionName, '::result.length::', result.length);
+        info(`[${col.collectionName}]result count::${result.length}`);
         resolve(result);
       } catch (e) {
-        console.log('[EntityManager find]Error: ', e); // eslint-disable-line no-console
+        error(e.message, e.stack);
         reject(e);
       }
     }));
