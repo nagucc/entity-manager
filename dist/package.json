@@ -1,0 +1,26 @@
+{
+  "name": "entity-manager",
+  "version": "0.5.1",
+  "description": "Entity Manager for mongodb",
+  "main": "dist/index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nagucc/entity-manager.git"
+  },
+  "author": "",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nagucc/entity-manager/issues"
+  },
+  "homepage": "https://github.com/nagucc/entity-manager#readme",
+  "jsnext:main": "index.es6.js",
+  "dependencies": {
+    "babel-runtime": "^6.6.1",
+    "mongo-use-collection": "^0.1.1",
+    "mongodb": "^2.2.16"
+  }
+}
