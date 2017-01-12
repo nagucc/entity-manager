@@ -52,8 +52,11 @@ export default class EntityManager {
     return new Promise((resolve, reject) => this.useEntity(async col => {
       let result;
       try {
-        info(`[${col.collectionName}]query::${JSON.stringify(query)}`);
+        info(`[${col.collectionName}]query::`, query);
+        info('limit:', limit);
+        info('skip:', skip);
         const cursor = col.find(query).skip(skip).limit(limit);
+        info('cursor:', cursor);
         result = await cursor.toArray();
         info(`[${col.collectionName}]result count::${result.length}`);
         return resolve(result);
