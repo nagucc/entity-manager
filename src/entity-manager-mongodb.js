@@ -56,10 +56,10 @@ export default class EntityManager {
         const cursor = col.find(query).skip(skip).limit(limit);
         result = await cursor.toArray();
         info(`[${col.collectionName}]result count::${result.length}`);
-        resolve(result);
+        return resolve(result);
       } catch (e) {
         error(e.message, e.stack);
-        reject(e);
+        return reject(e);
       }
     }));
   }
