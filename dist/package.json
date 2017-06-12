@@ -1,6 +1,6 @@
 {
   "name": "entity-manager",
-  "version": "0.6.2",
+  "version": "0.6.6",
   "description": "Entity Manager for mongodb",
   "main": "dist/index.js",
   "directories": {
