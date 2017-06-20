@@ -2,24 +2,24 @@
 EntityManager 类，用于生成一个通用的管理Entity的类。
  */
 /*
-eslint-disable no-console
+eslint-disable no-console, import/no-unresolved
  */
-import { useCollection } from 'mongo-use-collection'; // eslint-disable-line import/no-unresolved
-import { MongoClient, GridStore } from 'mongodb';
-import debug from 'debug';
+const { useCollection } = require('mongo-use-collection');
 
-const info = debug('entity-manager:info');
+const debug = require('debug');
 const error = debug('entity-manager:error');
+const info = debug('entity-manager:info');
+
 export default class EntityManager {
   /**
    * 构造函数
    * @param  {String} collectionName Entity使用的集合的名称
-   * @param  {String} mongoUrl       所使用的数据库的连接字符串
+   * @param  {String} urlOrDb       所使用的数据库的连接字符串或数据库对象
    */
-  constructor(mongoUrl, collectionName) {
+  constructor(urlOrDb, collectionName) {
     this.collectionName = collectionName;
-    this.mongoUrl = mongoUrl;
-    this.useEntity = cb => useCollection(mongoUrl, collectionName, cb);
+    // this.mongoUrl = mongoUrl;
+    this.useEntity = cb => useCollection(urlOrDb, collectionName, cb);
   }
 
   /**
@@ -29,13 +29,14 @@ export default class EntityManager {
    * @return {Promise}            操作结果
    */
   insert(entityData) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
+    if (!entityData) Promise.reject('entityData 不能为空');
+    return new Promise((resolve, reject) => this.useEntity(async (col) => {
       let result;
       try {
         result = await col.insertOne(entityData);
-        resolve(result);
+        resolve(result.insertedId);
       } catch (e) {
-        console.log('EntityManager Error: ', e); // eslint-disable-line no-console
+        error('EntityManager Error: ', e); // eslint-disable-line no-console
         reject(e);
       }
     }));
@@ -48,45 +49,49 @@ export default class EntityManager {
  * @param  {number} skip  =             0   跳过开头的结果
  * @return {Promise}       操作结果
  */
-  find({ query = {}, limit = 100, skip = 0 } = { query: {}, limit: 100, skip: 0 }) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
+  find(options = {}) {
+    const query = options.query || {};
+    const limit = options.limit || 100;
+    const skip = options.skip || 0;
+    const sort = options.sort || { _id: 1 };
+
+    return new Promise((resolve, reject) => this.useEntity(async (col) => {
       let result;
       try {
-        info(`[${col.collectionName}]query::`, query);
-        info('limit:', limit);
-        info('skip:', skip);
-        const cursor = col.find(query).skip(skip).limit(limit);
+        info(`[EntityManager find][${col.collectionName}]query::`, JSON.stringify(query));
+        const cursor = col.find(query).sort(sort).skip(skip)
+          .limit(limit);
         result = await cursor.toArray();
-        info(`[${col.collectionName}]result count::${result.length}`);
-        return resolve(result);
+        info('[EntityManager find]', col.collectionName, '::result.length::', result.length);
+        resolve(result);
       } catch (e) {
-        error(e.message, e.stack);
-        return reject(e);
+        error('[EntityManager find]Error: ', e); // eslint-disable-line no-console
+        reject(e);
       }
     }));
   }
 
   count(query = {}) {
-    console.log('[EntityManager count]query::', JSON.stringify(query));
-    return new Promise((resolve, reject) => this.useEntity(async col => {
+    info('[EntityManager count]query::', JSON.stringify(query));
+    return new Promise((resolve, reject) => this.useEntity(async (col) => {
       try {
         const result = await col.count(query);
-        console.log('[EntityManager count]result::', result);
+        info('[EntityManager count]result::', result);
         resolve(result);
       } catch (e) {
-        console.log('[EntityManager count]Error: ', e); // eslint-disable-line no-console
+        error('[EntityManager count]Error: ', e); // eslint-disable-line no-console
         reject(e);
       }
     }));
   }
 
   findOne(query = {}) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
+    return new Promise((resolve, reject) => this.useEntity(async (col) => {
       try {
         const result = await col.findOne(query);
         resolve(result);
       } catch (e) {
-        console.log('[EntityManager findOne]Error: ', e); // eslint-disable-line no-console
+        error('[EntityManager findOne]Error: ', e); // eslint-disable-line no-console
         reject(e);
       }
     }));
@@ -97,29 +102,29 @@ export default class EntityManager {
   }
 
   removeById(_id) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
+    return new Promise((resolve, reject) => this.useEntity(async (col) => {
       try {
-        const result = await col.remove({ _id }, { single: true });
-        resolve(result);
+        await col.remove({ _id }, { single: true });
+        resolve();
       } catch (e) {
-        console.log('[EntityManager removeById]Error: ', e); // eslint-disable-line no-console
+        error('[EntityManager findById]Error: ', e); // eslint-disable-line no-console
         reject(e);
       }
     }));
   }
 
-  updateById(_id, updateQuery, options) {
-    return this.update({ _id }, updateQuery, options);
+  updateById({ _id, ...other }) {
+    return this.update({ _id }, { $set: other });
   }
 
   update(condition, updateQuery, options = {}) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
+    return new Promise((resolve, reject) => this.useEntity(async (col) => {
       try {
         const result = await col.update(condition, updateQuery, options);
         resolve(result);
-      } catch (error) {
+      } catch (e) {
         reject({
-          error,
+          e,
           condition,
           updateQuery,
           options,
@@ -128,34 +133,8 @@ export default class EntityManager {
     }));
   }
 
-  aggregate(pipeline, options) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
-      try {
-        const cursor = col.aggregate(pipeline, options);
-        const result = await cursor.toArray();
-        resolve(result);
-      } catch (e) {
-        reject(e);
-      }
-    }));
-  }
-
-
-  group(keys, condition, initial, reduce, finalize, command, options) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
-      try {
-        // http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#group
-        const result = await col.group(keys, condition, initial,
-          reduce, finalize, command, options);
-        resolve(result);
-      } catch (e) {
-        reject(e);
-      }
-    }));
-  }
-
   mapReduce(map, reduce, options) {
-    return new Promise((resolve, reject) => this.useEntity(async col => {
+    return new Promise((resolve, reject) => this.useEntity(async (col) => {
       try {
         const result = await col.mapReduce(map, reduce, options);
         resolve(result);
@@ -163,57 +142,5 @@ export default class EntityManager {
         reject(e);
       }
     }));
-  }
-
-  async writeFile(data, fileId, filename, options = null) {
-    try {
-      // 连接数据库
-      const db = await MongoClient.connect(this.mongoUrl);
-
-      // 创建一个新文件用于写入
-      // http://mongodb.github.io/node-mongodb-native/2.2/api/GridStore.html
-      const gs = new GridStore(db, fileId, filename, 'w', options);
-
-      // 打开文件
-      await gs.open();
-
-      // 写入Buffer
-      await gs.write(data);
-
-      // 关闭文件
-      await gs.close();
-
-      await db.close();
-
-      // 返回文件Id
-      return fileId;
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async readFile(fileId) {
-    try {
-    // 连接数据库
-      const db = await MongoClient.connect(this.mongoUrl);
-      const file = await GridStore.read(db, fileId);
-      await db.close();
-
-      // 返回文件Buffer
-      return file;
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async removeFile(fileId) {
-    try {
-    // 连接数据库
-      const db = await MongoClient.connect(this.mongoUrl);
-      await GridStore.unlink(db, fileId);
-      await db.close();
-    } catch (e) {
-      throw e;
-    }
   }
 }
